@@ -16,6 +16,13 @@ st.set_page_config(
 # Initialize APIs (keys should be set in Secrets)
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
+# Set up Google Cloud credentials
+credentials_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+if credentials_json:
+    with open('google_credentials.json', 'w') as f:
+        f.write(credentials_json)
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'google_credentials.json'
+
 def extract_text_from_image(image):
     client = vision.ImageAnnotatorClient()
     image = vision.Image(content=image.getvalue())
