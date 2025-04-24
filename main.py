@@ -149,6 +149,8 @@ def show_document_upload():
                 if st.button("Submit Feedback"):
                     # In a real app, you would store this feedback
                     st.success("Thank you for your feedback!")
+                    st.session_state.radio = "Upload Document"
+                    st.experimental_rerun()
 
     # Disclaimer
     st.markdown("---")
