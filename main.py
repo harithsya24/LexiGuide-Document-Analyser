@@ -13,7 +13,12 @@ st.set_page_config(
 )
 
 # Initialize APIs (keys should be set in Secrets)
-openai.api_key = os.getenv('OPENAI_API_KEY')
+api_key = os.getenv('OPENAI_API_KEY')
+if not api_key:
+    st.error("Please set your OpenAI API key in Secrets")
+    st.stop()
+
+client = openai.OpenAI(api_key=api_key)
 
 # Set up Google Cloud credentials (removed as not needed for pytesseract)
 
@@ -25,7 +30,6 @@ def extract_text_from_image(image):
     return text if text else ""
 
 def analyze_legal_document(text):
-    client = openai.OpenAI()
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -79,7 +83,6 @@ def main():
                 st.subheader("Ask a Question")
                 user_question = st.text_input("What would you like to know about this document?")
                 if user_question:
-                    client = openai.OpenAI()
                     response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[
