@@ -157,12 +157,12 @@ def show_document_upload():
                     st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                     
                     # Clear input
-                    st.experimental_rerun()
+                    st.rerun()
 
                 # Clear chat button
                 if st.button("Clear Chat"):
                     st.session_state.chat_history = []
-                    st.experimental_rerun()
+                    st.rerun()
 
             with col2:
                 st.subheader("Find Legal Specialists")
@@ -179,7 +179,7 @@ def show_document_upload():
                     # In a real app, you would store this feedback
                     st.success("Thank you for your feedback!")
                     st.session_state.radio = "Upload Document"
-                    st.experimental_rerun()
+                    st.rerun()
 
     # Disclaimer
     st.markdown("---")
