@@ -123,17 +123,42 @@ def show_document_upload():
                 legal_terms = extract_legal_terms(text)
                 st.write(legal_terms)
 
-                st.subheader("Ask a Question")
-                user_question = st.text_input("What would you like to know about this document?")
+                st.subheader("Chat with Document")
+                # Initialize chat history
+                if 'chat_history' not in st.session_state:
+                    st.session_state.chat_history = []
+
+                # Display chat history
+                chat_container = st.container()
+                with chat_container:
+                    for chat in st.session_state.chat_history:
+                        if chat["role"] == "user":
+                            st.markdown(f"**You:** {chat['content']}")
+                        else:
+                            st.markdown(f"**Assistant:** {chat['content']}")
+                
+                # Chat input
+                user_question = st.text_input("Ask a question about your document", key="chat_input")
                 if user_question:
+                    # Add user message to history
+                    st.session_state.chat_history.append({"role": "user", "content": user_question})
+                    
                     response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[
-                            {"role": "system", "content": "Answer questions about this legal document."},
+                            {"role": "system", "content": "Answer questions about this legal document clearly and concisely."},
                             {"role": "user", "content": f"Document: {text}\nQuestion: {user_question}"}
                         ]
                     )
-                    st.write(response.choices[0].message.content)
+                    assistant_response = response.choices[0].message.content
+                    
+                    # Add assistant response to history
+                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+                    st.rerun()
+
+                if st.button("Clear Chat"):
+                    st.session_state.chat_history = []
+                    st.rerun()
 
             with col2:
                 st.subheader("Find Legal Specialists")
@@ -144,13 +169,33 @@ def show_document_upload():
                         st.write(specialist)
 
                 st.subheader("Feedback")
-                feedback = st.slider("How helpful was this analysis?", 1, 5, 3)
-                feedback_text = st.text_area("Additional comments")
-                if st.button("Submit Feedback"):
-                    # In a real app, you would store this feedback
+                if 'feedback_submitted' not in st.session_state:
+                    st.session_state.feedback_submitted = False
+
+                if not st.session_state.feedback_submitted:
+                    feedback_rating = st.slider("How helpful was this analysis?", 1, 5, 3)
+                    feedback_text = st.text_area("What can we improve?")
+                    feedback_satisfaction = st.radio("Would you recommend this tool to others?", ["Yes", "No", "Maybe"])
+                    
+                    if st.button("Submit Feedback"):
+                        # Store feedback (in a real app, save to database)
+                        feedback_data = {
+                            "rating": feedback_rating,
+                            "text": feedback_text,
+                            "satisfaction": feedback_satisfaction,
+                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        if 'all_feedback' not in st.session_state:
+                            st.session_state.all_feedback = []
+                        st.session_state.all_feedback.append(feedback_data)
+                        st.session_state.feedback_submitted = True
+                        st.success("Thank you for your feedback! Your input helps us improve.")
+                        st.rerun()
+                else:
                     st.success("Thank you for your feedback!")
-                    st.session_state.radio = "Upload Document"
-                    st.experimental_rerun()
+                    if st.button("Provide More Feedback"):
+                        st.session_state.feedback_submitted = False
+                        st.rerun()
 
     # Disclaimer
     st.markdown("---")
