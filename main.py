@@ -95,8 +95,6 @@ def main():
         st.info("Analysis history will be implemented in future updates")
 
 def show_document_upload():
-
-    def show_document_upload():
     # Document Upload
     uploaded_file = st.file_uploader("Upload your legal document", type=["pdf", "png", "jpg", "jpeg"])
 
@@ -158,3 +156,9 @@ def show_document_upload():
 
 if __name__ == "__main__":
     main()
+
+    # Configure Streamlit to run on the correct host and port
+    import os
+    os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
+    os.environ['STREAMLIT_SERVER_PORT'] = '8501'
+    os.environ['STREAMLIT_SERVER_HEADLESS'] = 'true'
