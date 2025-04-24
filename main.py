@@ -123,46 +123,17 @@ def show_document_upload():
                 legal_terms = extract_legal_terms(text)
                 st.write(legal_terms)
 
-                st.subheader("Chat with Document")
-                # Initialize chat history
-                if 'chat_history' not in st.session_state:
-                    st.session_state.chat_history = []
-
-                # Display chat history
-                chat_container = st.container()
-                with chat_container:
-                    for message in st.session_state.chat_history:
-                        if message["role"] == "user":
-                            st.write("You: " + message["content"])
-                        else:
-                            st.write("Assistant: " + message["content"])
-
-                # Chat input
-                user_question = st.text_input("Ask me anything about this document", key="chat_input")
+                st.subheader("Ask a Question")
+                user_question = st.text_input("What would you like to know about this document?")
                 if user_question:
-                    # Add user message to chat history
-                    st.session_state.chat_history.append({"role": "user", "content": user_question})
-                    
                     response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[
-                            {"role": "system", "content": "You are a helpful legal assistant. Answer questions about the legal document in a clear and friendly manner."},
-                            {"role": "user", "content": f"Document content: {text}"},
-                            {"role": "user", "content": user_question}
+                            {"role": "system", "content": "Answer questions about this legal document."},
+                            {"role": "user", "content": f"Document: {text}\nQuestion: {user_question}"}
                         ]
                     )
-                    
-                    # Add assistant response to chat history
-                    assistant_response = response.choices[0].message.content
-                    st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-                    
-                    # Clear input
-                    st.rerun()
-
-                # Clear chat button
-                if st.button("Clear Chat"):
-                    st.session_state.chat_history = []
-                    st.rerun()
+                    st.write(response.choices[0].message.content)
 
             with col2:
                 st.subheader("Find Legal Specialists")
@@ -179,7 +150,7 @@ def show_document_upload():
                     # In a real app, you would store this feedback
                     st.success("Thank you for your feedback!")
                     st.session_state.radio = "Upload Document"
-                    st.rerun()
+                    st.experimental_rerun()
 
     # Disclaimer
     st.markdown("---")
