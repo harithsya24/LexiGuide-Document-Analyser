@@ -64,8 +64,39 @@ def get_specialist_recommendations(location):
 
 def main():
     st.title("🔍 LexiGuide Legal Document Analyzer")
-    st.write("Upload your legal document for AI-powered analysis and recommendations")
+    
+    # Create menu using radio buttons
+    menu = st.sidebar.radio("Navigation", ["Upload Document", "My Documents", "Legal Dictionary", "Analysis History"])
+    
+    if menu == "Upload Document":
+        st.write("Upload your legal document for AI-powered analysis and recommendations")
+        show_document_upload()
+    elif menu == "My Documents":
+        st.subheader("My Documents")
+        st.write("Your previously analyzed documents will appear here")
+        # In a real app, you would fetch from a database
+        st.info("Document history will be implemented in future updates")
+    elif menu == "Legal Dictionary":
+        st.subheader("Legal Dictionary")
+        term = st.text_input("Search for a legal term")
+        if term:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a legal dictionary. Explain legal terms in simple language."},
+                    {"role": "user", "content": f"Define this legal term: {term}"}
+                ]
+            )
+            st.write(response.choices[0].message.content)
+    elif menu == "Analysis History":
+        st.subheader("Analysis History")
+        st.write("Your previous analyses will appear here")
+        # In a real app, you would fetch from a database
+        st.info("Analysis history will be implemented in future updates")
 
+def show_document_upload():
+
+    def show_document_upload():
     # Document Upload
     uploaded_file = st.file_uploader("Upload your legal document", type=["pdf", "png", "jpg", "jpeg"])
 
