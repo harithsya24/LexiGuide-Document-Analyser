@@ -25,7 +25,8 @@ def extract_text_from_image(image):
     return text if text else ""
 
 def analyze_legal_document(text):
-    response = openai.ChatCompletion.create(
+    client = openai.OpenAI()
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a legal document analyzer. Provide a clear summary and highlight key points."},
@@ -78,7 +79,8 @@ def main():
                 st.subheader("Ask a Question")
                 user_question = st.text_input("What would you like to know about this document?")
                 if user_question:
-                    response = openai.ChatCompletion.create(
+                    client = openai.OpenAI()
+                    response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[
                             {"role": "system", "content": "Answer questions about this legal document."},
