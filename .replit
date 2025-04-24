@@ -3,6 +3,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["tesseract"]
 
 [unitTest]
 language = "python3"
@@ -25,3 +26,7 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "streamlit run main.py"
+
+[[ports]]
+localPort = 8501
+externalPort = 80
