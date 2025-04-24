@@ -1,10 +1,16 @@
 import streamlit as st
 import os
+import requests
 from PIL import Image
 import pytesseract
 import openai
-from geopy.geocoders import Nominatim
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+api_key = os.getenv('OPENAI_API_KEY')
+maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
 
 # Page config
 st.set_page_config(
@@ -12,26 +18,21 @@ st.set_page_config(
     layout="wide"
 )
 
-# Initialize APIs (keys should be set in Secrets)
-api_key = os.getenv('OPENAI_API_KEY')
-if not api_key:
-    st.error("Please set your OpenAI API key in Secrets")
+# Check API keys
+if not api_key or not maps_api_key:
+    st.error("Please make sure both OpenAI and Google Maps API keys are set in your .env file")
     st.stop()
 
-client = openai.OpenAI(api_key=api_key)
-
-# Set up Google Cloud credentials (removed as not needed for pytesseract)
+openai.api_key = api_key
 
 def extract_text_from_image(image):
-    # Convert uploaded file to PIL Image
     img = Image.open(image)
-    # Extract text using pytesseract
     text = pytesseract.image_to_string(img)
     return text if text else ""
 
 def analyze_legal_document(text):
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are a legal document analyzer. Provide a clear summary, highlight key points, and explain important legal terms used."},
             {"role": "user", "content": f"Analyze this legal document and provide: 1) A summary 2) Key points 3) Legal terms used with their explanations:\n\n{text}"}
@@ -40,7 +41,7 @@ def analyze_legal_document(text):
     return response.choices[0].message.content
 
 def extract_legal_terms(text):
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a legal terminology expert. Extract and explain legal terms from the document."},
@@ -49,23 +50,24 @@ def extract_legal_terms(text):
     )
     return response.choices[0].message.content
 
-def get_specialist_recommendations(location):
-    geolocator = Nominatim(user_agent="lexiguide")
+'''def get_specialist_recommendations(location):
     try:
-        location_data = geolocator.geocode(location)
-        # In a real app, you would query a database of legal specialists
-        return [
-            "Law Firm A - Specialists in Contract Law",
-            "Legal Consultant B - Corporate Law Expert",
-            "Attorney C - General Practice"
-        ]
-    except:
-        return ["Unable to find specialists in your area"]
+        url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location}&key={maps_api_key}"
+        res = requests.get(url).json()
+        if res['status'] == 'OK':
+            return [
+                "Law Firm A - Specialists in Contract Law",
+                "Legal Consultant B - Corporate Law Expert",
+                "Attorney C - General Practice"
+            ]
+        else:
+            return ["Unable to geocode location. Please check the input."]
+    except Exception as e:
+        return [f"Error: {str(e)}"]'''
 
 def main():
     st.title("🔍 LexiGuide Legal Document Analyzer")
     
-    # Create menu using radio buttons
     menu = st.sidebar.radio("Navigation", ["Upload Document", "My Documents", "Legal Dictionary", "Analysis History"])
     
     if menu == "Upload Document":
@@ -73,8 +75,6 @@ def main():
         show_document_upload()
     elif menu == "My Documents":
         st.subheader("My Documents")
-        st.write("Your previously analyzed documents will appear here")
-        # In a real app, you would fetch from a database
         st.info("Document history will be implemented in future updates")
     elif menu == "Legal Dictionary":
         st.subheader("Legal Dictionary")
@@ -90,29 +90,22 @@ def main():
             st.write(response.choices[0].message.content)
     elif menu == "Analysis History":
         st.subheader("Analysis History")
-        st.write("Your previous analyses will appear here")
-        # In a real app, you would fetch from a database
         st.info("Analysis history will be implemented in future updates")
 
 def show_document_upload():
-    # Document Upload
     uploaded_file = st.file_uploader("Upload your legal document", type=["pdf", "png", "jpg", "jpeg"])
 
     if uploaded_file:
-        # Process document
         with st.spinner("Processing document..."):
             if uploaded_file.type.startswith('image'):
                 image = Image.open(uploaded_file)
                 text = extract_text_from_image(uploaded_file)
             else:
-                # For PDF support, additional processing would be needed
                 st.error("PDF support coming soon!")
                 return
 
-            # Analyze document
             analysis = analyze_legal_document(text)
 
-            # Display results
             col1, col2 = st.columns(2)
 
             with col1:
@@ -124,11 +117,9 @@ def show_document_upload():
                 st.write(legal_terms)
 
                 st.subheader("Chat with Document")
-                # Initialize chat history
                 if 'chat_history' not in st.session_state:
                     st.session_state.chat_history = []
 
-                # Display chat history
                 chat_container = st.container()
                 with chat_container:
                     for chat in st.session_state.chat_history:
@@ -137,12 +128,9 @@ def show_document_upload():
                         else:
                             st.markdown(f"**Assistant:** {chat['content']}")
                 
-                # Chat input
                 user_question = st.text_input("Ask a question about your document", key="chat_input")
                 if user_question:
-                    # Add user message to history
                     st.session_state.chat_history.append({"role": "user", "content": user_question})
-                    
                     response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[
@@ -151,8 +139,6 @@ def show_document_upload():
                         ]
                     )
                     assistant_response = response.choices[0].message.content
-                    
-                    # Add assistant response to history
                     st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
                     st.rerun()
 
@@ -161,12 +147,12 @@ def show_document_upload():
                     st.rerun()
 
             with col2:
-                st.subheader("Find Legal Specialists")
-                location = st.text_input("Enter your location")
-                if location:
-                    specialists = get_specialist_recommendations(location)
-                    for specialist in specialists:
-                        st.write(specialist)
+                #st.subheader("Find Legal Specialists")
+                #location = st.text_input("Enter your location")
+                #if location:
+                    #specialists = get_specialist_recommendations(location)
+                    #for specialist in specialists:
+                        #st.write(specialist)
 
                 st.subheader("Feedback")
                 if 'feedback_submitted' not in st.session_state:
@@ -178,7 +164,6 @@ def show_document_upload():
                     feedback_satisfaction = st.radio("Would you recommend this tool to others?", ["Yes", "No", "Maybe"])
                     
                     if st.button("Submit Feedback"):
-                        # Store feedback (in a real app, save to database)
                         feedback_data = {
                             "rating": feedback_rating,
                             "text": feedback_text,
@@ -197,15 +182,8 @@ def show_document_upload():
                         st.session_state.feedback_submitted = False
                         st.rerun()
 
-    # Disclaimer
     st.markdown("---")
-    st.caption("⚠️ Disclaimer: LexiGuide provides document analysis and recommendations but does not constitute legal advice. Always consult with a qualified legal professional for legal matters.")
+    st.caption("⚠️ Disclaimer: LexiGuide provides document analysis and recommendations but does not constitute legal advice. Always consult with a qualified legal professional.")
 
 if __name__ == "__main__":
     main()
-
-    # Configure Streamlit to run on the correct host and port
-    import os
-    os.environ['STREAMLIT_SERVER_ADDRESS'] = '0.0.0.0'
-    os.environ['STREAMLIT_SERVER_PORT'] = '8501'
-    os.environ['STREAMLIT_SERVER_HEADLESS'] = 'true'

@@ -1,0 +1,8 @@
+streamlit
+openai
+pytesseract
+pillow
+geopy
+pdfplumber
+fitz  # or pymupdf
+python-dotenv
