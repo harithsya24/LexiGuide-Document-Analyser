@@ -33,8 +33,18 @@ def analyze_legal_document(text):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a legal document analyzer. Provide a clear summary and highlight key points."},
-            {"role": "user", "content": f"Analyze this legal document:\n\n{text}"}
+            {"role": "system", "content": "You are a legal document analyzer. Provide a clear summary, highlight key points, and explain important legal terms used."},
+            {"role": "user", "content": f"Analyze this legal document and provide: 1) A summary 2) Key points 3) Legal terms used with their explanations:\n\n{text}"}
+        ]
+    )
+    return response.choices[0].message.content
+
+def extract_legal_terms(text):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a legal terminology expert. Extract and explain legal terms from the document."},
+            {"role": "user", "content": f"Extract all legal terms from this document and provide their definitions in simple language:\n\n{text}"}
         ]
     )
     return response.choices[0].message.content
@@ -79,6 +89,10 @@ def main():
             with col1:
                 st.subheader("Document Summary")
                 st.write(analysis)
+                
+                st.subheader("Legal Terms Glossary")
+                legal_terms = extract_legal_terms(text)
+                st.write(legal_terms)
 
                 st.subheader("Ask a Question")
                 user_question = st.text_input("What would you like to know about this document?")
