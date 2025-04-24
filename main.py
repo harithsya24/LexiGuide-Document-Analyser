@@ -1,8 +1,7 @@
-
 import streamlit as st
 import os
 from PIL import Image
-from google.cloud import vision
+import pytesseract
 import openai
 from geopy.geocoders import Nominatim
 from datetime import datetime
@@ -16,18 +15,14 @@ st.set_page_config(
 # Initialize APIs (keys should be set in Secrets)
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Set up Google Cloud credentials
-credentials_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-if credentials_json:
-    with open('google_credentials.json', 'w') as f:
-        f.write(credentials_json)
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'google_credentials.json'
+# Set up Google Cloud credentials (removed as not needed for pytesseract)
 
 def extract_text_from_image(image):
-    client = vision.ImageAnnotatorClient()
-    image = vision.Image(content=image.getvalue())
-    response = client.text_detection(image=image)
-    return response.text_annotations[0].description if response.text_annotations else ""
+    # Convert uploaded file to PIL Image
+    img = Image.open(image)
+    # Extract text using pytesseract
+    text = pytesseract.image_to_string(img)
+    return text if text else ""
 
 def analyze_legal_document(text):
     response = openai.ChatCompletion.create(
@@ -55,10 +50,10 @@ def get_specialist_recommendations(location):
 def main():
     st.title("🔍 LexiGuide Legal Document Analyzer")
     st.write("Upload your legal document for AI-powered analysis and recommendations")
-    
+
     # Document Upload
     uploaded_file = st.file_uploader("Upload your legal document", type=["pdf", "png", "jpg", "jpeg"])
-    
+
     if uploaded_file:
         # Process document
         with st.spinner("Processing document..."):
@@ -69,17 +64,17 @@ def main():
                 # For PDF support, additional processing would be needed
                 st.error("PDF support coming soon!")
                 return
-            
+
             # Analyze document
             analysis = analyze_legal_document(text)
-            
+
             # Display results
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 st.subheader("Document Summary")
                 st.write(analysis)
-                
+
                 st.subheader("Ask a Question")
                 user_question = st.text_input("What would you like to know about this document?")
                 if user_question:
@@ -91,7 +86,7 @@ def main():
                         ]
                     )
                     st.write(response.choices[0].message.content)
-            
+
             with col2:
                 st.subheader("Find Legal Specialists")
                 location = st.text_input("Enter your location")
@@ -99,14 +94,14 @@ def main():
                     specialists = get_specialist_recommendations(location)
                     for specialist in specialists:
                         st.write(specialist)
-                
+
                 st.subheader("Feedback")
                 feedback = st.slider("How helpful was this analysis?", 1, 5, 3)
                 feedback_text = st.text_area("Additional comments")
                 if st.button("Submit Feedback"):
                     # In a real app, you would store this feedback
                     st.success("Thank you for your feedback!")
-    
+
     # Disclaimer
     st.markdown("---")
     st.caption("⚠️ Disclaimer: LexiGuide provides document analysis and recommendations but does not constitute legal advice. Always consult with a qualified legal professional for legal matters.")

@@ -8,6 +8,7 @@ dependencies = [
     "geopy>=2.4.1",
     "google-cloud-vision>=3.10.1",
     "openai>=1.76.0",
+    "pytesseract>=0.3.13",
     "sift-stack-py>=0.5.1",
     "streamlit>=1.44.1",
 ]
