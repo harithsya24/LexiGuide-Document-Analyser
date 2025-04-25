@@ -1,5 +1,5 @@
 streamlit
-openai
+openai==0.0.28
 pytesseract
 pillow
 geopy
